@@ -52,8 +52,6 @@ services:
     depends_on:
       - krb5-kdc-server
     entrypoint: ["/bin/bash", "-c", "/entry.sh"]
-#    command: ["bash", "-c", "trap : TERM INT; sleep infinity & wait"]
-#    command: ["cp", "/krb5/krb5.keytab", "/home/appuser/krb5.keytab", ";", "/usr/bin/zookeeper-server-start.sh", "/etc/kafka/zookeeper.properties"]
 volumes:
   zookeeper_data:
   zookkeeper_logs:
