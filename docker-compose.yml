@@ -1,10 +1,18 @@
 name: kafka-kerberos
 services:
-  krb5-kdc-server:
-    image: godatadriven/krb5-kdc-server
+  kerberos:
+    build:
+      context: ./kerberos/build
     hostname: krb5-kdc-server
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 5s
+      retries: 5
+      timeout: 1s
+      start_period: 1s
     volumes:
-      - ./krb5-kdc-server/start_kdc.sh:/app/start_kdc.sh
+      - ./kerberos/config.sh:/app/config.sh
+      - ./kerberos/healthcheck.sh:/app/healthcheck.sh
       - ./krb5:/krb5
     ports:
       - "88:88"
@@ -30,8 +38,11 @@ services:
       - kafka_data:/var/lib/kafka/data
     entrypoint: ["/bin/bash", "-c", "/entry.sh"]
     depends_on:
-      - krb5-kdc-server
-      - zookeeper
+      kerberos:
+        condition: service_healthy
+      zookeeper:
+        condition: service_started
+    restart: always
   zookeeper:
     image: confluentinc/cp-zookeeper
     ports:
@@ -50,7 +61,8 @@ services:
       ZOOKEEPER_KERBEROS_REMOVEREALMFROMPRINCIPAL: true
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/zookeeper_jaas.conf -Dsun.security.krb5.debug=true -Djava.security.krb5.conf=/krb5/krb5.conf"
     depends_on:
-      - krb5-kdc-server
+      kerberos:
+        condition: service_healthy
     entrypoint: ["/bin/bash", "-c", "/entry.sh"]
 volumes:
   zookeeper_data:
